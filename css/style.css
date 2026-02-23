@@ -19,9 +19,22 @@ html, body {
     opacity: 0;
     rx: 2.5;
     filter: drop-shadow(0 0 3px #FFA500);
+    transform: translate(
+        calc(var(--dx, 0) * -10px),
+        calc(var(--dy, 0) * -10px)
+    );
 }
-@keyframes appear {
-    0% { opacity: 0; transform: scale(0.5); }
-    50% { opacity: 1; transform: scale(1.3); }
-    100% { opacity: 1; transform: scale(1); }
+.dot.show {
+    animation: slideIn 1s ease-out forwards;
 }
+#pacman{
+    height: 15px;
+    width: 15px;
+}
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+}
+
