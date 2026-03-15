@@ -17,7 +17,7 @@ const MARGIN_TOP = 15;     // Razdalja od vrha canvasa do sredine prve vrstice
 const MARGIN_LEFT = -10;   // Razdalja od levega roba canvasa do sredine prvega stolpca
 const STEP = 26.5;         // Razmik med središči celic
 
-const ANIMATION_SPEED = 300; // Hitrost v ms (manj je hitreje)
+const ANIMATION_SPEED = 1000; // Hitrost v ms (manj je hitreje)
 // -----------------------------------------------------
 
 // Celotna pot (tvoji moves)
