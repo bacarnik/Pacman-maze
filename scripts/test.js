@@ -2,25 +2,32 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 // Slike
-const mazeImg = new Image();
-mazeImg.src = "img/maze.svg";
+const MAZE_IMG = new Image();
+MAZE_IMG.src = "img/maze.svg";
 
-const pacmanImg = new Image();
-pacmanImg.src = "img/pacman-open.svg";
+const PACMAN_OPEN_IMG = new Image();
+PACMAN_OPEN_IMG.src = "img/pacman-open.png";
 
-// --- NASTAVITVE ZA PORAVNAVO (Umerjeno na 800x800) ---
+const PACMAN_CLOSED_IMG = new Image();
+PACMAN_CLOSED_IMG.src = "img/pacman-closed.png";
+
+// --- NASTAVITVE ---
 const GRID_CELLS = 30;
 const DOT_SIZE = 8;
 const PACMAN_SIZE = 24; // Velikost Pac-Mana na platnu
 
 const MARGIN_TOP = 15;     // Razdalja od vrha canvasa do sredine prve vrstice
 const MARGIN_LEFT = -10;   // Razdalja od levega roba canvasa do sredine prvega stolpca
-const STEP = 26.5;         // Razmik med središči celic
+const STEP = 26.5;         // Razmik med središči celic (800 px / 30 celic)
 
-const ANIMATION_SPEED = 1000; // Hitrost v ms (manj je hitreje)
+const ANIMATION_SPEED = 500;        // Hitrost v ms (manj je hitreje)
+const MOUTH_SPEED = 250;     // Koliko ms naj bo slika zamenjana
+
+let lastUpdateTime = 0;
+let isMouthClosed = false; // Stanje ust
 // -----------------------------------------------------
 
-// Celotna pot (tvoji moves)
+// Celotna pot 
 const moves = "3L,1D,2L,1U,1L,2D,1L,2U,1L,1D,1L,1U,2L,2D,2L,2U,1L,6D,1R,1D,1L,2D,1R,1U,1R,2U,2R,1D,1R,1U,1R,1D,1R,1D,1L,1D,1R,1D,3R,1U,1R,1D,1R,1D,5L,3D,2R,1D,1L,2D,1L,2U,1L,3U,3L,1D,2R,1D,1L,2D,1R,1D,1L,3D,1R,1D,1L,1D,1L,1U,2L,2U,1R,1D,1R,2U,3L,5D,3R,1D,1R,1U,2R,1D,2R,1D,4R,1U,4R,1U,1R,1D,1R,2D,1R,1D,2L,2U,2L,1D,2L,1D,1L,1D,1R,1D,1R,1U,1R,2D";
 const moveList = moves.split(",");
 
@@ -53,9 +60,6 @@ moveList.forEach(move => {
     }
 });
 
-let currentStep = 0;
-let lastUpdateTime = 0;
-
 function getCanvasCoords(cx, cy) {
     return {
         x: MARGIN_LEFT + (cx * STEP),
@@ -65,28 +69,31 @@ function getCanvasCoords(cx, cy) {
 
 // Glavna zanka animacije
 function gameLoop(timestamp) {
-    //pacmanImg.src = "img/pacman-open.svg"; 
     if (timestamp - lastUpdateTime > ANIMATION_SPEED) {
         if (dots.length > 0) {
-            // .shift() vzame prvo pikico in jo IZBRIŠE iz seznama
+            // Vzamemo točko in jo izbrišemo iz seznama pikic
             const nextPoint = dots.shift(); 
-            
-            // Posodobimo pozicijo in smer Pacmana
+            const nextDir = directions.shift();
+
             pacmanPos.x = nextPoint[0];
             pacmanPos.y = nextPoint[1];
-            pacmanPos.dir = directions.shift();
+            pacmanPos.dir = nextDir;
 
-            // Zamenjava slike
-            pacmanImg.src = "img/pacman-closed.svg"; 
+            isMouthClosed = !isMouthClosed; 
         }
         lastUpdateTime = timestamp;
+    }
+    
+    // Logika za odpiranje ust (npr. po polovici časa koraka)
+    if (isMouthClosed && (timestamp - lastUpdateTime > MOUTH_SPEED)) {
+        isMouthClosed = false;
     }
 
     // 1. Čiščenje
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 2. Labirint
-    ctx.drawImage(mazeImg, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(MAZE_IMG, 0, 0, canvas.width, canvas.height);
 
     // 3. Vse pikice (ostanejo na mestu)
     drawDots();
@@ -116,18 +123,21 @@ function drawPacman() {
     if (dir === "U") angle = -Math.PI / 2;
     if (dir === "D") angle = Math.PI / 2;
 
+    const currentImg = isMouthClosed ? PACMAN_CLOSED_IMG : PACMAN_OPEN_IMG;
+
     ctx.save();
     ctx.translate(coords.x, coords.y);
     ctx.rotate(angle);
-    ctx.drawImage(pacmanImg, -PACMAN_SIZE / 2, -PACMAN_SIZE / 2, PACMAN_SIZE, PACMAN_SIZE);
+    ctx.drawImage(currentImg, -PACMAN_SIZE / 2, -PACMAN_SIZE / 2, PACMAN_SIZE, PACMAN_SIZE);
     ctx.restore();
 }
 
-// Zagon ko sta obe sliki pripravljeni
+// Zagon ko vse slike pripravljene
 let loadedImages = 0;
 function checkLoad() {
     loadedImages++;
-    if (loadedImages === 2) requestAnimationFrame(gameLoop);
+    if (loadedImages === 3) requestAnimationFrame(gameLoop);
 }
-mazeImg.onload = checkLoad;
-pacmanImg.onload = checkLoad;
+MAZE_IMG.onload = checkLoad;
+PACMAN_OPEN_IMG.onload = checkLoad;
+PACMAN_CLOSED_IMG.onload = checkLoad;
