@@ -1,6 +1,16 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+// Pridobi referenco do križca
+const closeBtn = document.getElementById('close-overlay');
+const overlayElement = document.getElementById('game-over-overlay');
+
+// Zvoki
+const START_SOUND = new Audio("sounds/start.wav"); 
+const EAT_SOUND = new Audio("sounds/eat_dot.wav");
+
+EAT_SOUND.volume = 0.5;
+
 // Slike
 const MAZE_IMG = new Image();
 MAZE_IMG.src = "img/maze.svg";
@@ -39,6 +49,12 @@ let dots = [];
 let directions = ["L"]; // Začetna smer za rotacijo
 let pacmanPos = { x: startX, y: startY, dir: "L" };
 
+// Točke 
+let score = 0;
+const scoreVal = document.getElementById("score-val");
+const finalScore = document.getElementById("final-score");
+const overlay = document.getElementById("game-over-overlay");
+
 // Inicializacija podatkov (pokličemo takoj)
 resetData();
 
@@ -63,7 +79,13 @@ function resetData() {
     pacmanPos = { x: startX, y: startY, dir: "L" };
 }
 
+// Logika za zapiranje na klik
+closeBtn.addEventListener('click', () => {
+    overlayElement.style.display = "none";
+    resetGame();
+});
 // --- POMOŽNE FUNKCIJE ZA RISANJE ---
+
 function getCanvasCoords(cx, cy) {
     return {
         x: MARGIN_LEFT + (cx * STEP),
@@ -98,6 +120,11 @@ function drawPacman() {
     ctx.drawImage(isMouthClosed ? PACMAN_CLOSED_IMG : PACMAN_OPEN_IMG, -PACMAN_SIZE / 2, -PACMAN_SIZE / 2, PACMAN_SIZE, PACMAN_SIZE);
     ctx.restore();
 }
+// --- TOČKOVANJE IN GAME OVER ---
+function showGameOver() {
+    finalScoreElement.innerText = score;
+    gameOverOverlay.style.display = "flex";
+}
 
 // --- LOGIKA IGRE ---
 function gameLoop(timestamp) {
@@ -105,14 +132,26 @@ function gameLoop(timestamp) {
 
     if (timestamp - lastUpdateTime > ANIMATION_SPEED) {
         if (dots.length > 0) {
+            // Shranimo vrednosti, ki jih vzamemo iz seznamov
             const nextPoint = dots.shift(); 
             const nextDir = directions.shift();
+            
+            // .cloneNode().play() omogoča, da se zvok prekriva, če se Pacman premika hitro
+            EAT_SOUND.cloneNode().play();
+
+            // Točkovanje
+            score += 10;
+            scoreVal.innerText = score;
+
             pacmanPos.x = nextPoint[0];
             pacmanPos.y = nextPoint[1];
+
             pacmanPos.dir = nextDir;
             isMouthClosed = !isMouthClosed; 
         } else {
-            isRunning = false; // Ustavi, ko zmanjka pikic
+            isRunning = false;
+            finalScore.innerText = score;
+            overlay.style.display = "flex";
         }
         lastUpdateTime = timestamp;
     }
@@ -127,15 +166,34 @@ function gameLoop(timestamp) {
 
 function startGame() {
     if (!isRunning && dots.length > 0) {
-        isRunning = true;
-        lastUpdateTime = performance.now(); 
-        requestAnimationFrame(gameLoop);
+        // 1. Predvajaj zvok takoj ob kliku
+        START_SOUND.play();
+        
+        // 2. Nastavi stanje na "running", da gumbi vedo, da se je začelo vendar ne kličemo še requestAnimationFrame
+        isRunning = true; 
+        
+        // 3. Počakaj 4000 milisekund (4 sekunde) preden se dejansko začne premikanje
+        setTimeout(() => {
+            if (isRunning) { // Preverimo, če vmes nismo pritisnili Reset
+                lastUpdateTime = performance.now(); 
+                requestAnimationFrame(gameLoop);
+            }
+        }, 4000);
     }
 }
 
 function resetGame() {
     isRunning = false;
     cancelAnimationFrame(animationId);
+
+    // Ustavi začetni zvok in ga postavi na začetek
+    START_SOUND.pause();
+    START_SOUND.currentTime = 0;
+
+    score = 0;
+    scoreVal.innerText = "0";
+    overlay.style.display = "none";
+
     resetData(); 
     drawStaticScene();
 }
