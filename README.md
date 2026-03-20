@@ -7,7 +7,8 @@ A classic web-based Pacman experience built with HTML5, CSS3, and JavaScript. Na
 ## 🖼️ Game Preview
 
 Here is a look at the game in action:
-![Pacman Maze Game Screenshot](<img width="881" height="1026" alt="{FD660AC4-6CF4-4D74-BEE8-FC5EF033ACB9}" src="https://github.com/user-attachments/assets/6cb5c145-d094-40ad-82ca-136bbfb1d30c" />)
+<img width="881" height="1026" alt="{FD660AC4-6CF4-4D74-BEE8-FC5EF033ACB9}" src="https://github.com/user-attachments/assets/981b8846-041d-4f90-9b30-573fc33523b8" />
+
 
 ---
 
